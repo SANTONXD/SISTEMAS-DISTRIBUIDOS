@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestión de Libros</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>📚 CRUD de Libros</h1>
+  </header>
+
+  <main>
+    <h2 id="formTitulo">Agregar libro</h2>
+    <form id="formLibro">
+      <input type="hidden" id="libroId">
+      <input type="text" id="titulo" placeholder="Título" required>
+      <input type="text" id="autor" placeholder="Autor" required>
+      <input type="text" id="genero" placeholder="Género" required>
+      <input type="number" id="precio" placeholder="Precio" step="0.01" required>
+      <input type="number" id="stock" placeholder="Stock" required>
+      <button type="submit">Guardar</button>
+      <button type="button" id="cancelarEdicion" style="display:none;">Cancelar</button>
+    </form>
+
+    <h2>Lista de libros</h2>
+    <ul id="listaLibros"></ul>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Venta de Libros con IA | Proyecto académico</p>
+  </footer>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let token = localStorage.getItem("token");
+    let exp = localStorage.getItem("exp");
+    let editando = false;
+
+    function validarSesion() {
+      if (!token || !exp || Date.now() > exp) {
+        alert("⚠️ Sesión expirada, inicia sesión nuevamente.");
+        localStorage.clear();
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    async function listarLibros() {
+      if (!validarSesion()) return;
+      const resp = await fetch(`${API_URL}/libros/`);
+      const libros = await resp.json();
+      const lista = document.getElementById("listaLibros");
+      lista.innerHTML = "";
+      libros.forEach(libro => {
+        const li = document.createElement("li");
+        li.textContent = `${libro.titulo} - ${libro.autor} (${libro.genero}) - $${libro.precio}`;
+
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "✏️";
+        btnEditar.onclick = () => cargarLibroEnFormulario(libro);
+
+        const btnEliminar = document.createElement("button");
+        btnEliminar.textContent = "❌";
+        btnEliminar.onclick = () => eliminarLibro(libro.id);
+
+        li.appendChild(btnEditar);
+        li.appendChild(btnEliminar);
+        lista.appendChild(li);
+      });
+    }
+
+    function cargarLibroEnFormulario(libro) {
+      document.getElementById("formTitulo").textContent = "Editar libro";
+      document.getElementById("libroId").value = libro.id;
+      document.getElementById("titulo").value = libro.titulo;
+      document.getElementById("autor").value = libro.autor;
+      document.getElementById("genero").value = libro.genero;
+      document.getElementById("precio").value = libro.precio;
+      document.getElementById("stock").value = libro.stock;
+      document.getElementById("cancelarEdicion").style.display = "inline";
+      editando = true;
+    }
+
+    document.getElementById("formLibro").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!validarSesion()) return;
+
+      const libro = {
+        titulo: document.getElementById("titulo").value,
+        autor: document.getElementById("autor").value,
+        genero: document.getElementById("genero").value,
+        precio: parseFloat(document.getElementById("precio").value),
+        stock: parseInt(document.getElementById("stock").value)
+      };
+
+      if (editando) {
+        const id = document.getElementById("libroId").value;
+        await fetch(`${API_URL}/libros/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(libro)
+        });
+        resetFormulario();
+      } else {
+        await fetch(`${API_URL}/libros/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(libro)
+        });
+      }
+
+      listarLibros();
+    });
+
+    async function eliminarLibro(id) {
+      if (!validarSesion()) return;
+      await fetch(`${API_URL}/libros/${id}`, {
+        method: "DELETE",
+        headers: {"Authorization": `Bearer ${token}`}
+      });
+      listarLibros();
+    }
+
+    document.getElementById("cancelarEdicion").addEventListener("click", resetFormulario);
+
+    function resetFormulario() {
+      document.getElementById("formTitulo").textContent = "Agregar libro";
+      document.getElementById("formLibro").reset();
+      document.getElementById("libroId").value = "";
+      document.getElementById("cancelarEdicion").style.display = "none";
+      editando = false;
+    }
+
+    (async () => {
+      if (!validarSesion()) return;
+      listarLibros();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat con IA</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>🤖 Resumen y opiniones de Libros con IA</h1>
+  </header>
+
+  <main>
+    <h2>📚 Selecciona un libro:</h2>
+    <ul id="listaLibros"></ul>
+
+    <h2>Respuesta IA:</h2>
+    <div id="respuesta">Haz clic en un libro para ver su resumen y opinión.</div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Venta de Libros con IA | Proyecto académico</p>
+  </footer>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let token = localStorage.getItem("token");
+    let exp = localStorage.getItem("exp");
+
+    function validarSesion() {
+      if (!token || !exp || Date.now() > exp) {
+        alert("⚠️ Sesión expirada, inicia sesión nuevamente.");
+        localStorage.clear();
+        window.location.href = "login.html";
+        return false;
+      }
+      return true;
+    }
+
+    async function listarLibros() {
+      if (!validarSesion()) return;
+      const resp = await fetch(`${API_URL}/libros/`);
+      const libros = await resp.json();
+      const lista = document.getElementById("listaLibros");
+      lista.innerHTML = "";
+      libros.forEach(libro => {
+        const li = document.createElement("li");
+        li.textContent = `${libro.titulo} - ${libro.autor}`;
+        li.onclick = () => consultarIA(libro.titulo);
+        lista.appendChild(li);
+      });
+    }
+
+    async function consultarIA(titulo) {
+      if (!validarSesion()) return;
+      const resp = await fetch(`${API_URL}/chat/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ titulo })
+      });
+      const data = await resp.json();
+      document.getElementById("respuesta").innerText = data.respuesta || "Error con la IA";
+    }
+
+    (async () => {
+      if (!validarSesion()) return;
+      listarLibros();
+    })();
+  </script>
+</body>
+</html>

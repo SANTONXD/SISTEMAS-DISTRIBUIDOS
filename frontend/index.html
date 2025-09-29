@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Menú Principal</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>📚 Bienvenido al sistema de Venta de Libros con IA</h1>
+  </header>
+
+  <main>
+    <p>Selecciona una opción:</p>
+    <button onclick="irCrud()">📖 Gestión de Libros (CRUD)</button>
+    <button onclick="irChat()">🤖 Chat con IA</button>
+    <button onclick="cerrarSesion()">🚪 Cerrar Sesión</button>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Venta de Libros con IA | Proyecto académico</p>
+  </footer>
+
+  <script>
+    const token = localStorage.getItem("token");
+    const exp = localStorage.getItem("exp");
+
+    function validarSesion() {
+      if (!token || !exp || Date.now() > exp) {
+        alert("⚠️ Sesión expirada, inicia sesión nuevamente.");
+        localStorage.clear();
+        window.location.href = "login.html";
+      }
+    }
+
+    function irCrud() {
+      validarSesion();
+      window.location.href = "crud.html";
+    }
+
+    function irChat() {
+      validarSesion();
+      window.location.href = "chat.html";
+    }
+
+    function cerrarSesion() {
+      localStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    validarSesion();
+  </script>
+</body>
+</html>

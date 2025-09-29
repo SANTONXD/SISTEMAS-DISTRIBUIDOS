@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>🔑 Iniciar Sesión</h1>
+  </header>
+
+  <main>
+    <form id="formLogin">
+      <input type="text" id="username" placeholder="Usuario" required>
+      <input type="password" id="password" placeholder="Contraseña" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="mensaje"></p>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Venta de Libros con IA | Proyecto académico</p>
+  </footer>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+
+    document.getElementById("formLogin").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+
+      const resp = await fetch(`${API_URL}/token`, {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: new URLSearchParams({username, password})
+      });
+
+      if (!resp.ok) {
+        document.getElementById("mensaje").textContent = "❌ Usuario o contraseña incorrectos";
+        return;
+      }
+
+      const data = await resp.json();
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("exp", Date.now() + (30 * 60 * 1000));
+
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
